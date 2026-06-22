@@ -1,0 +1,14 @@
+node_modules
+.next
+.vscode
+.git
+.gitignore
+out
+build
+.env*.local
+*.db
+*.db-journal
+docker-compose*.yml
+README.md
+AGENTS.md
+CLAUDE.md

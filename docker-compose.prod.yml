@@ -1,0 +1,23 @@
+services:
+  promptcraft:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: promptcraft-app
+    restart: always
+    ports:
+      # Expose Next.js app to port 3000 of the host machine
+      - "3000:3000"
+    networks:
+      - tunorth-net
+    environment:
+      # Construct DATABASE_URL using shared PostgreSQL credentials (fallback to defaults if not defined in .env)
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-hVLcvCI17kc.r6XZ}@${DB_HOST:-shared-postgres}:${DB_PORT:-5432}/${DB_NAME:-promptcraft_db}?schema=public}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+
+networks:
+  # Connect to the existing shared docker network of EDMS and BRMS
+  tunorth-net:
+    external: true

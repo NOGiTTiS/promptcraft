@@ -1,0 +1,69 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ตารางข้อมูลผู้ใช้งานระบบ (นักเรียน หรือ ครูผู้สอน)
+model User {
+  id           String     @id @default(uuid())
+  username     String     @unique
+  passwordHash String
+  role         String     @default("STUDENT") // STUDENT หรือ TEACHER
+  createdAt    DateTime   @default(now())
+  prompts      Prompt[]
+  progress     Progress[]
+
+  @@map("users")
+}
+
+// ตารางโจทย์ / ภารกิจทดสอบความสามารถในการเขียน Prompt ของนักเรียน
+model Challenge {
+  id             String     @id @default(uuid())
+  title          String
+  description    String     @db.Text
+  difficulty     String     @default("EASY") // EASY, MEDIUM, HARD
+  expectedFormat String     // รูปแบบผลลัพธ์ที่โจทย์คาดหวัง เช่น TABLE, LIST, PARAGRAPH
+  systemPrompt   String     @db.Text // คำสั่งเบื้องหลังที่คอยประเมินคำตอบของนักเรียน
+  createdAt      DateTime   @default(now())
+  prompts        Prompt[]
+  progress       Progress[]
+
+  @@map("challenges")
+}
+
+// ตารางจัดเก็บประวัติ Prompt ที่นักเรียนประกอบร่างขึ้นมา
+model Prompt {
+  id           String    @id @default(uuid())
+  userId       String
+  challengeId  String
+  task         String    @db.Text // 1. คำสั่งหลัก
+  context      String?   @db.Text // 2. บริบท
+  examples     String?   @db.Text // 3. ตัวอย่างคำตอบ
+  persona      String?   @db.Text // 4. บทบาทสมมุติ
+  format       String?   @db.Text // 5. รูปแบบผลลัพธ์
+  tone         String?   @db.Text // 6. โทนเสียงอารมณ์
+  compiledText String    @db.Text // ข้อความฉบับเต็มที่ประกอบร่างเสร็จเรียบร้อยแล้ว
+  createdAt    DateTime  @default(now())
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge    Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@map("prompts")
+}
+
+// ตารางบันทึกความสำเร็จและการทดสอบภารกิจของผู้เรียนแต่ละคน
+model Progress {
+  id              String    @id @default(uuid())
+  userId          String
+  challengeId     String
+  status          String    @default("PENDING") // PENDING, PASSED, FAILED
+  submittedPrompt String    @db.Text
+  aiResponse      String    @db.Text
+  submittedAt     DateTime  @default(now())
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge       Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@map("progress")
+}
